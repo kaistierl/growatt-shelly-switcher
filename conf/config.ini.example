@@ -1,0 +1,18 @@
+[growatt]
+username = user
+password = secret123$
+
+[shelly]
+baseurl = http://192.168.x.x
+username = admin
+password = secret123$
+turnon_seconds = 1800
+
+[main]
+check_interval_seconds = 300
+battery_threshold_on_percent = 75
+battery_threshold_off_percent = 25
+night_start_hour = 22
+night_start_minute = 00
+night_end_hour = 5
+night_end_minute = 00
