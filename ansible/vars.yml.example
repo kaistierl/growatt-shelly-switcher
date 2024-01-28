@@ -1,0 +1,21 @@
+---
+
+hostname: "solarberry"
+ssh_pubkey: "ssh-ed25519 EXAMPLEKEY comment"
+
+growatt_server_url: "https://openapi.growatt.com/"
+growatt_username: "user"
+growatt_password: "secret123$"
+
+shelly_baseurl: "http://192.168.x.x"
+shelly_username: "admin"
+shelly_password: "secret123$"
+shelly_turnon_seconds: 1800 # 30m
+
+check_interval_seconds: 300 # 5m
+battery_threshold_on_percent: 75
+battery_threshold_off_percent: 25
+night_start_hour: 22
+night_start_minute: 0
+night_end_hour: 5
+night_end_minute: 0

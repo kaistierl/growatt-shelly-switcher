@@ -16,6 +16,7 @@ logger.info('Welcome! Initializing...')
 # read config
 config = configparser.ConfigParser()
 config.read('conf/config.ini')
+growatt_server_url = str(config['growatt']['server_url'])
 growatt_username = str(config['growatt']['username'])
 growatt_password = str(config['growatt']['password'])
 shelly_baseurl = str(config['shelly']['baseurl'])
@@ -34,7 +35,8 @@ night_end_minute = int(config['main']['night_end_minute'])
 def update_state():
   
   # login to growatt
-  growattApi = growattServer.GrowattApi()
+  growattApi = growattServer.GrowattApi(False, "blahfoobar")
+  growattApi.server_url = growatt_server_url
   login_response = growattApi.login(growatt_username, growatt_password)
   if not login_response['success']:
     logger.error('Login to Growatt Server failed: %s', login_response['error'])

@@ -1,0 +1,145 @@
+---
+
+### after executing this playbook, run `tailscale up` to connect the device
+### to tailscale
+
+- hosts: all
+  become: yes
+  become_user: root
+  force_handlers: true
+
+  vars_files:
+    - ./vars.yml
+
+  handlers:
+    - name: restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted
+
+    - name: restart growatt-app
+      ansible.builtin.service:
+        name: growatt-app
+        state: restarted
+
+  tasks:
+    # general preparation
+    - name: set hostname
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+
+    - name: set timezone
+      ansible.builtin.timezone:
+        name: Europe/Berlin
+
+    # configure ssh
+    - name: add ssh key to root
+      ansible.builtin.authorized_key:
+        user: root
+        state: present
+        key: "{{ ssh_pubkey }}"
+
+    - name: install sshd_config
+      ansible.builtin.copy:
+        src: ssh/sshd_config
+        dest: /etc/ssh/sshd_config
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart sshd
+
+    # delete default user
+    - name: Remove the user 'pi'
+      ansible.builtin.user:
+        name: pi
+        state: absent
+        remove: yes
+
+    # install tailscale
+    - name: install apt-transport-https
+      ansible.builtin.package:
+        name: apt-transport-https
+        state: present
+
+    - name: Install Tailscale GPG keys
+      ansible.builtin.shell:
+        cmd: curl -fsSL https://pkgs.tailscale.com/stable/raspbian/bullseye.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg > /dev/null
+        creates: /usr/share/keyrings/tailscale-archive-keyring.gpg
+
+    - name: Add tailscale repo
+      ansible.builtin.apt_repository:
+        repo: deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] https://pkgs.tailscale.com/stable/raspbian bullseye main
+        state: present
+        filename: tailscale
+
+    - name: Install tailscale
+      ansible.builtin.package:
+        name: tailscale
+        state: present
+
+    # install app
+    - name: Install app dependencies
+      ansible.builtin.package:
+        name:
+          - python3
+          - python3-pip
+        state: present
+      notify: restart growatt-app
+      tags: app
+
+    - name: Make app directory
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - /opt/app
+        - /opt/app/conf
+      notify: restart growatt-app
+      tags: app
+        
+    - name: Install app
+      ansible.builtin.copy:
+        src: "../app/{{ item }}"
+        dest: "/opt/app/{{ item }}"
+        owner: root
+        group: root
+        mode: 0644
+      with_items:
+        - main.py
+        - requirements.txt
+        - conf/logging.ini
+      notify: restart growatt-app
+      tags: app
+
+    - name: Install python requirements
+      ansible.builtin.pip:
+        requirements: /opt/app/requirements.txt
+      notify: restart growatt-app
+      tags: app
+
+    - name: Install app configuration file
+      ansible.builtin.template:
+        src: app/config.ini.j2
+        dest: /opt/app/conf/config.ini
+        owner: root
+        group: root
+        mode: 0600
+      notify: restart growatt-app
+      tags: app
+
+    - name: Install systemd unit
+      ansible.builtin.copy:
+        src: systemd/growatt-app.service 
+        dest: /etc/systemd/system/growatt-app.service 
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart growatt-app
+      tags: app
+
+    - name: enable and start growatt-app
+      ansible.builtin.service:
+        name: growatt-app
+        state: started
+        enabled: true
+      tags: app

@@ -1,2 +1,4 @@
-/conf/config.ini
-/out.log
+.DS_Store
+/app/conf/config.ini
+/app/out.log
+/ansible/vars.yml

@@ -5,7 +5,7 @@
 - Inverter: Growatt SPH 8000TL3 BH-UP connected to Server via Growatt ShineWifi-X
 - Shelly Plug to switch the load, HTTP API enabled
 - Load: Generic Heater, connected to shelly plug
-- Raspberry Pi Pico to run the python script on
+- Raspberry Pi Zero W to run the software on
  
 ## Software
 
@@ -23,6 +23,7 @@ Example `conf/config.ini`:
 
 ```ini
 [growatt]
+server_url = https://openapi.growatt.com/
 username = user
 password = secret123$
 
