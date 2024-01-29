@@ -26,6 +26,8 @@ Example `conf/config.ini`:
 server_url = https://openapi.growatt.com/
 username = user
 password = secret123$
+login_tries = 3
+login_retry_wait_seconds = 10
 
 [shelly]
 baseurl = http://192.168.x.x

@@ -19,6 +19,8 @@ config.read('conf/config.ini')
 growatt_server_url = str(config['growatt']['server_url'])
 growatt_username = str(config['growatt']['username'])
 growatt_password = str(config['growatt']['password'])
+growatt_login_tries = int(config['growatt']['login_tries'])
+growatt_login_retry_wait_seconds = int(config['growatt']['login_retry_wait_seconds'])
 shelly_baseurl = str(config['shelly']['baseurl'])
 shelly_username = str(config['shelly']['username'])
 shelly_password = str(config['shelly']['password'])
@@ -33,15 +35,27 @@ night_end_minute = int(config['main']['night_end_minute'])
 
 # update function
 def update_state():
-  
   # login to growatt
   growattApi = growattServer.GrowattApi(False, requests.utils.default_headers()['User-Agent'])
-  logger.debug('User Agent: %s', growattApi.agent_identifier)
   growattApi.server_url = growatt_server_url
-  login_response = growattApi.login(growatt_username, growatt_password)
+  logger.debug('Logging in to Growatt Server at \'%s\' with user agent \'%s\'',
+               growattApi.server_url, growattApi.agent_identifier)
+  for i in range(1,growatt_login_tries + 1):
+    try:
+      login_response = growattApi.login(growatt_username, growatt_password)
+    except Exception as e:
+      if i == growatt_login_tries:
+        logger.error("Login to Growatt Server failed - retries exhausted (retry %s/%s): %s",
+                     i, growatt_login_tries, e)
+        raise 
+      else:
+        logger.warning("Login to Growatt Server failed - retrying in %ss (retry %s/%s): %s", 
+                       growatt_login_retry_wait_seconds, i, growatt_login_tries, e)
+        time.sleep(growatt_login_retry_wait_seconds)
+        continue
   if not login_response['success']:
     logger.error('Login to Growatt Server failed: %s', login_response['error'])
-    raise Exception("growatt server login failed")
+    raise Exception("Growatt Server login failed")
   login_username = login_response['user']['accountName']
   logger.info('Logged in to Growatt Server with user \'%s\'', login_username)
 
@@ -112,11 +126,11 @@ def set_load_state(target_state: bool, timer_sec : int = None):
     raise e
 
 def is_time_between(start_time, end_time):
-    now =  datetime.datetime.now().time()
-    if start_time < end_time:
-        return now >= start_time and now <= end_time
-    else: # crosses midnight
-        return now >= start_time or now <= end_time
+  now =  datetime.datetime.now().time()
+  if start_time < end_time:
+    return now >= start_time and now <= end_time
+  else: # crosses midnight
+    return now >= start_time or now <= end_time
 
 # main loop
 while(True):
@@ -128,9 +142,9 @@ while(True):
   else:
     logger.info('Starting update job')
     try:
-        update_state()
-        logger.info('Update job finished successfully')
-    except:
-        logger.exception('Update job failed!')
+      update_state()
+      logger.info('Update job finished successfully')
+    except Exception as e:
+      logger.exception('Update job failed, caught exception: %s', e)
   logger.info('Sleeping for %s seconds...', check_interval_seconds)
   time.sleep(check_interval_seconds)
