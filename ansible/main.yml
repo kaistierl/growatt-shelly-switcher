@@ -109,7 +109,9 @@
         - requirements.txt
         - conf/logging.ini
       notify: restart growatt-app
-      tags: app
+      tags:
+        - app
+        - app-config-only
 
     - name: Install python requirements
       ansible.builtin.pip:
@@ -125,7 +127,9 @@
         group: root
         mode: 0600
       notify: restart growatt-app
-      tags: app
+      tags:
+        - app
+        - app-config-only
 
     - name: Install systemd unit
       ansible.builtin.copy:
