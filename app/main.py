@@ -1,7 +1,27 @@
+#!/usr/bin/env python3
+
+"""
+Growatt Shelly Switcher
+
+This program periodically checks the battery state of a Growatt solar power plant. Depending on the current charge
+level of the battery, a load that is connected to a shelly relay is switched on for a certain amount of time.
+The timer runs independently on the shelly relay and is refreshed on each check cycle of the program, if needed.
+
+The state of the solar power plant is requested by using the cloud based Growatt Server API.
+To communicate with the shelly relay, the shelly HTTP API is used.
+
+The software has a night-time mode - during configurable hours of the day, the load is always switched off.
+
+Configuration:
+    Configuration is loaded from two files: ``conf/config.ini`` and ``conf/logging.ini``.
+    Please check the provided examples for further details.
+"""
+
 import time
 import datetime
 import json
 import logging
+import logging.config
 import configparser
 import growattServer
 import requests
@@ -33,8 +53,13 @@ night_end_hour = int(config['main']['night_end_hour'])
 night_end_minute = int(config['main']['night_end_minute'])
 
 
-# update function
 def update_state():
+    """
+    The main function of this program.
+
+    Logs in to Growatt Server and gets the solar plant battery state.
+    Then checks the current state of the shelly relay and updates it appropriately.
+    """
     # login to growatt
     growattApi = growattServer.GrowattApi(False, requests.utils.default_headers()['User-Agent'])
     growattApi.server_url = growatt_server_url
@@ -99,8 +124,13 @@ def update_state():
     logger.debug('Current load status: %s', str(load_status))
 
 
-# function to get the current state of the load
 def get_load_state():
+    """
+    Gets the current state of the shelly relay.
+
+    Returns:
+        dict: Parsed JSON response from the shelly device containing the relay state.
+    """
     request_url = shelly_baseurl + "/relay/0"
     try:
         r = requests.get(request_url, auth=HTTPBasicAuth(shelly_username, shelly_password))
@@ -112,8 +142,14 @@ def get_load_state():
     return status
 
 
-# function to set the state of the load
 def set_load_state(target_state: bool, timer_sec: int = None):
+    """
+    Sets the state of the shelly relay.
+
+    Args:
+        target_state: The target state of the relay. Relay is on if True.
+        timer_sec: An optional timer to send to the shelly, given in seconds.
+    """
     if target_state and timer_sec is not None:
         request_url = shelly_baseurl + "/relay/0?turn=on&timer=" + str(timer_sec)
     elif target_state:
@@ -128,7 +164,17 @@ def set_load_state(target_state: bool, timer_sec: int = None):
         raise e
 
 
-def is_time_between(start_time, end_time):
+def is_time_between(start_time: datetime.time, end_time: datetime.time):
+    """
+    Determines if the current time is between two given datetimes
+
+    Args:
+        start_time: The boundary start time to compare against.
+        end_time: The boundary end time to compare against.
+
+    Returns:
+        bool: True if current time is between the boundaries.
+    """
     now = datetime.datetime.now().time()
     if start_time < end_time:
         return now >= start_time and now <= end_time
@@ -136,7 +182,6 @@ def is_time_between(start_time, end_time):
         return now >= start_time or now <= end_time
 
 
-# main loop
 while (True):
     if is_time_between(datetime.time(night_start_hour, night_start_minute),
                        datetime.time(night_end_hour, night_end_minute)):
