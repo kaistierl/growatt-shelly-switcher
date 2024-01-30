@@ -55,8 +55,6 @@ night_end_minute = int(config['main']['night_end_minute'])
 
 def update_state():
     """
-    The main function of this program.
-
     Logs in to Growatt Server and gets the solar plant battery state.
     Then checks the current state of the shelly relay and updates it appropriately.
     """
@@ -70,17 +68,17 @@ def update_state():
             login_response = growattApi.login(growatt_username, growatt_password)
         except Exception as e:
             if i == growatt_login_tries:
-                logger.error("Login to Growatt Server failed - retries exhausted (retry %s/%s): %s",
+                logger.error('Login to Growatt Server failed - retries exhausted (retry %s/%s): %s',
                              i, growatt_login_tries, e)
                 raise
             else:
-                logger.warning("Login to Growatt Server failed - retrying in %ss (retry %s/%s): %s",
+                logger.warning('Login to Growatt Server failed - retrying in %ss (retry %s/%s): %s',
                                growatt_login_retry_wait_seconds, i, growatt_login_tries, e)
                 time.sleep(growatt_login_retry_wait_seconds)
                 continue
     if not login_response['success']:
         logger.error('Login to Growatt Server failed: %s', login_response['error'])
-        raise Exception("Growatt Server login failed")
+        raise Exception('Growatt Server login failed')
     login_username = login_response['user']['accountName']
     logger.info('Logged in to Growatt Server with user \'%s\'', login_username)
 
@@ -131,7 +129,7 @@ def get_load_state():
     Returns:
         dict: Parsed JSON response from the shelly device containing the relay state.
     """
-    request_url = shelly_baseurl + "/relay/0"
+    request_url = shelly_baseurl + '/relay/0'
     try:
         r = requests.get(request_url, auth=HTTPBasicAuth(shelly_username, shelly_password))
         r.raise_for_status()
@@ -151,11 +149,11 @@ def set_load_state(target_state: bool, timer_sec: int = None):
         timer_sec: An optional timer to send to the shelly, given in seconds.
     """
     if target_state and timer_sec is not None:
-        request_url = shelly_baseurl + "/relay/0?turn=on&timer=" + str(timer_sec)
+        request_url = shelly_baseurl + '/relay/0?turn=on&timer=' + str(timer_sec)
     elif target_state:
-        request_url = shelly_baseurl + "/relay/0?turn=on"
+        request_url = shelly_baseurl + '/relay/0?turn=on'
     else:
-        request_url = shelly_baseurl + "/relay/0?turn=off"
+        request_url = shelly_baseurl + '/relay/0?turn=off'
     try:
         r = requests.get(request_url, auth=HTTPBasicAuth(shelly_username, shelly_password))
         r.raise_for_status()
@@ -182,18 +180,23 @@ def is_time_between(start_time: datetime.time, end_time: datetime.time):
         return now >= start_time or now <= end_time
 
 
-while (True):
-    if is_time_between(datetime.time(night_start_hour, night_start_minute),
-                       datetime.time(night_end_hour, night_end_minute)):
-        logger.info('Nighttime mode is enabled between %02d:%02d and %02d:%02d - ensuring the load is OFF',
-                    night_start_hour, night_start_minute, night_end_hour, night_end_minute)
-        set_load_state(False)
-    else:
-        logger.info('Starting update job')
-        try:
-            update_state()
-            logger.info('Update job finished successfully')
-        except Exception as e:
-            logger.exception('Update job failed, caught exception: %s', e)
-    logger.info('Sleeping for %s seconds...', check_interval_seconds)
-    time.sleep(check_interval_seconds)
+def main():
+    while True:
+        if is_time_between(datetime.time(night_start_hour, night_start_minute),
+                           datetime.time(night_end_hour, night_end_minute)):
+            logger.info('Nighttime mode is enabled between %02d:%02d and %02d:%02d - ensuring the load is OFF',
+                        night_start_hour, night_start_minute, night_end_hour, night_end_minute)
+            set_load_state(False)
+        else:
+            logger.info('Starting update job')
+            try:
+                update_state()
+                logger.info('Update job finished successfully')
+            except Exception as e:
+                logger.exception('Update job failed, caught exception: %s', e)
+        logger.info('Sleeping for %s seconds...', check_interval_seconds)
+        time.sleep(check_interval_seconds)
+
+
+if __name__ == '__main__':
+    main()
