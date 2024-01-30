@@ -23,7 +23,7 @@ Example `conf/config.ini`:
 
 ```ini
 [growatt]
-server_url: "https://server.growatt.com/"
+server_url = https://server.growatt.com/
 ;server_url = https://openapi.growatt.com/
 username = user
 password = secret123$
