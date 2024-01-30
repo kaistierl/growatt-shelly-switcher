@@ -3,8 +3,8 @@
 ## Hardware
 
 - Inverter: Growatt SPH 8000TL3 BH-UP connected to Server via Growatt ShineWifi-X
-- Shelly Plug to switch the load, HTTP API enabled
-- Load: Generic Heater, connected to shelly plug
+- Shelly relay or plug to switch the load, HTTP API enabled
+- Load: Generic heating element, connected to shelly via external load contactor
 - Raspberry Pi Zero W to run the software on
  
 ## Software
