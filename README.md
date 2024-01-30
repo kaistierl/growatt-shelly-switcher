@@ -23,10 +23,11 @@ Example `conf/config.ini`:
 
 ```ini
 [growatt]
-server_url = https://openapi.growatt.com/
+server_url: "https://server.growatt.com/"
+;server_url = https://openapi.growatt.com/
 username = user
 password = secret123$
-login_tries = 3
+login_tries = 2
 login_retry_wait_seconds = 10
 
 [shelly]
