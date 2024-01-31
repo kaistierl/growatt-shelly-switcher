@@ -5,6 +5,7 @@ After=multi-user.target
 [Service]
 Type=simple
 Restart=always
+RestartSec=30
 WorkingDirectory=/opt/app
 ExecStart=/usr/bin/python3 main.py
 

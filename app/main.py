@@ -53,14 +53,17 @@ night_end_hour = int(config['main']['night_end_hour'])
 night_end_minute = int(config['main']['night_end_minute'])
 
 
-def update_state():
+def growatt_login(growattApi: growattServer.GrowattApi):
     """
-    Logs in to Growatt Server and gets the solar plant battery state.
-    Then checks the current state of the shelly relay and updates it appropriately.
+    Logs in to Growatt Server. Retries the login on failure since sometimes the Growatt Server throws random
+    HTTP 403 or 405s.
+
+    Args:
+        growattApi: Growatt API object.
+
+    Returns:
+        str: User ID of the logged in account.
     """
-    # login to growatt
-    growattApi = growattServer.GrowattApi(False, requests.utils.default_headers()['User-Agent'])
-    growattApi.server_url = growatt_server_url
     logger.debug('Logging in to Growatt Server at \'%s\' with user agent \'%s\'',
                  growattApi.server_url, growattApi.agent_identifier)
     for i in range(1, growatt_login_tries + 1):
@@ -70,7 +73,7 @@ def update_state():
             if i == growatt_login_tries:
                 logger.error('Login to Growatt Server failed - retries exhausted (retry %s/%s): %s',
                              i, growatt_login_tries, e)
-                raise
+                raise e
             else:
                 logger.warning('Login to Growatt Server failed - retrying in %ss (retry %s/%s): %s',
                                growatt_login_retry_wait_seconds, i, growatt_login_tries, e)
@@ -79,15 +82,28 @@ def update_state():
     if not login_response['success']:
         logger.error('Login to Growatt Server failed: %s', login_response['error'])
         raise Exception('Growatt Server login failed')
-    login_username = login_response['user']['accountName']
-    logger.info('Logged in to Growatt Server with user \'%s\'', login_username)
+    username = login_response['user']['accountName']
+    userid = login_response['user']['id']
+    logger.info('Logged in to Growatt Server with user \'%s\' (ID \'%s\')', username, userid)
+    return userid
 
+
+def update_state(growattApi: growattServer.GrowattApi, growatt_userid: str):
+    """
+    Gets the solar plant battery state.
+    Then checks the current state of the shelly relay and updates it appropriately.
+
+    Args:
+        growattApi: Object to interact with the Growatt API. Must be logged in before.
+        growatt_userid: User ID of the logged in user.
+    """
     # get plant and inverter IDs
-    growatt_plant_id = login_response['data'][0]['plantId']
-    growatt_plant_name = login_response['data'][0]['plantName']
+    growatt_plant_list = growattApi.plant_list(growatt_userid)
+    growatt_plant_id = growatt_plant_list['data'][0]['plantId']
+    growatt_plant_name = growatt_plant_list['data'][0]['plantName']
     growatt_inverter_id = growattApi.device_list(growatt_plant_id)[0]['deviceSn']
-    logger.info('Using plant \'%s\' with ID \'%s\' and inverter with ID \'%s\'',
-                growatt_plant_name, growatt_plant_id, growatt_inverter_id)
+    logger.debug('Using plant \'%s\' with ID \'%s\' and inverter with ID \'%s\'',
+                 growatt_plant_name, growatt_plant_id, growatt_inverter_id)
 
     # get battery status
     inverter_system_status = growattApi.mix_system_status(growatt_inverter_id, growatt_plant_id)
@@ -95,7 +111,7 @@ def update_state():
     battery_capacity_percent = int(inverter_system_status['SOC'])
     logger.info('Current battery percentage: %s%%', str(battery_capacity_percent))
 
-    # get load status
+    # print load status to debug log
     load_status = get_load_state()
     logger.debug('Current load status: %s', str(load_status))
 
@@ -117,7 +133,7 @@ def update_state():
         logger.info('Battery percentage is between thresholds of %s%% and %s%% - Load is OFF - doing nothing',
                     str(battery_threshold_off), str(battery_threshold_on))
 
-    # get load status
+    # print load status to debug log
     load_status = get_load_state()
     logger.debug('Current load status: %s', str(load_status))
 
@@ -181,6 +197,11 @@ def is_time_between(start_time: datetime.time, end_time: datetime.time):
 
 
 def main():
+    # initially log in to growatt server
+    growattApi = growattServer.GrowattApi(False, requests.utils.default_headers()['User-Agent'])
+    growattApi.server_url = growatt_server_url
+    growatt_userid = growatt_login(growattApi)
+    # run periodic update job
     while True:
         if is_time_between(datetime.time(night_start_hour, night_start_minute),
                            datetime.time(night_end_hour, night_end_minute)):
@@ -190,8 +211,17 @@ def main():
         else:
             logger.info('Starting update job')
             try:
-                update_state()
+                update_state(growattApi, growatt_userid)
                 logger.info('Update job finished successfully')
+            except json.decoder.JSONDecodeError:
+                logger.warning('Update job failed, could not decode response from server. '
+                               'Assuming expired session, trying to renew...')
+                try:
+                    growatt_userid = growatt_login(growattApi)
+                    update_state(growattApi, growatt_userid)
+                    logger.info('Update job finished successfully')
+                except Exception as e:
+                    logger.exception('Renewing expired session failed, caught exception: %s', e)
             except Exception as e:
                 logger.exception('Update job failed, caught exception: %s', e)
         logger.info('Sleeping for %s seconds...', check_interval_seconds)
