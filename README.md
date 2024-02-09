@@ -4,6 +4,7 @@
 
 - Inverter: Growatt SPH 8000TL3 BH-UP connected to Server via Growatt ShineWifi-X
 - Shelly relay or plug to switch the load, HTTP API enabled
+  - Code is built for Gen2+ devices which use HTTP digest auth, if Gen1 device is used, it must be changed to HTTP basic auth
 - Load: Generic heating element, connected to shelly via external load contactor
 - Raspberry Pi Zero W to run the software on
  

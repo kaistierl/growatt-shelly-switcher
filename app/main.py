@@ -25,7 +25,7 @@ import logging.config
 import configparser
 import growattServer
 import requests
-from requests.auth import HTTPBasicAuth
+from requests.auth import HTTPDigestAuth
 
 # initialize logging
 logging.config.fileConfig('conf/logging.ini')
@@ -118,19 +118,19 @@ def update_state(growattApi: growattServer.GrowattApi, growatt_userid: str):
     # check battery status and set appropriate target state of the load
     load_ison = bool(load_status['ison'])
     if (battery_capacity_percent >= battery_threshold_on):
-        logger.info('Battery percentage is equal or above threshold of %s%% - Switching ON the load with timer (%ss)',
+        logger.info('Battery percentage is equal or above threshold of %s%% - switching ON the load with timer (%ss)',
                     str(battery_threshold_on), str(shelly_turnon_seconds))
         set_load_state(True, shelly_turnon_seconds)
     elif (battery_capacity_percent <= battery_threshold_off):
-        logger.info('Battery percentage is equal or below threshold of %s%% - Switching OFF the load',
+        logger.info('Battery percentage is equal or below threshold of %s%% - switching OFF the load',
                     str(battery_threshold_off))
         set_load_state(False)
     elif load_ison:
-        logger.info('Battery percentage is between thresholds of %s%% and %s%% - Load is ON - refreshing timer (%ss)',
+        logger.info('Battery percentage is between thresholds of %s%% and %s%% - load is ON - refreshing timer (%ss)',
                     str(battery_threshold_off), str(battery_threshold_on), str(shelly_turnon_seconds))
         set_load_state(True, shelly_turnon_seconds)
     else:
-        logger.info('Battery percentage is between thresholds of %s%% and %s%% - Load is OFF - doing nothing',
+        logger.info('Battery percentage is between thresholds of %s%% and %s%% - load is OFF - doing nothing',
                     str(battery_threshold_off), str(battery_threshold_on))
 
     # print load status to debug log
@@ -147,7 +147,7 @@ def get_load_state():
     """
     request_url = shelly_baseurl + '/relay/0'
     try:
-        r = requests.get(request_url, auth=HTTPBasicAuth(shelly_username, shelly_password))
+        r = requests.get(request_url, auth=HTTPDigestAuth(shelly_username, shelly_password))
         r.raise_for_status()
     except Exception as e:
         logger.error('Getting load status failed!')
@@ -171,7 +171,7 @@ def set_load_state(target_state: bool, timer_sec: int = None):
     else:
         request_url = shelly_baseurl + '/relay/0?turn=off'
     try:
-        r = requests.get(request_url, auth=HTTPBasicAuth(shelly_username, shelly_password))
+        r = requests.get(request_url, auth=HTTPDigestAuth(shelly_username, shelly_password))
         r.raise_for_status()
     except Exception as e:
         logger.error('Setting load status failed!')
@@ -214,8 +214,7 @@ def main():
                 update_state(growattApi, growatt_userid)
                 logger.info('Update job finished successfully')
             except json.decoder.JSONDecodeError:
-                logger.warning('Update job failed, could not decode response from server. '
-                               'Assuming expired session, trying to renew...')
+                logger.warning('Update job failed, assuming expired session - trying to renew')
                 try:
                     growatt_userid = growatt_login(growattApi)
                     update_state(growattApi, growatt_userid)
