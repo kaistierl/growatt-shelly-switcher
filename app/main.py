@@ -197,6 +197,7 @@ def is_time_between(start_time: datetime.time, end_time: datetime.time):
 
 
 def main():
+    starttime = time.monotonic()
     # initially log in to growatt server
     growattApi = growattServer.GrowattApi(False, requests.utils.default_headers()['User-Agent'])
     growattApi.server_url = growatt_server_url
@@ -223,8 +224,9 @@ def main():
                     logger.exception('Renewing expired session failed, caught exception: %s', e)
             except Exception as e:
                 logger.exception('Update job failed, caught exception: %s', e)
-        logger.info('Sleeping for %s seconds...', check_interval_seconds)
-        time.sleep(check_interval_seconds)
+        sleep_time = check_interval_seconds - ((time.monotonic() - starttime) % check_interval_seconds)
+        logger.info('Sleeping for %.2f seconds...', sleep_time)
+        time.sleep(sleep_time)
 
 
 if __name__ == '__main__':
