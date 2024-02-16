@@ -26,6 +26,7 @@ import configparser
 import growattServer
 import requests
 from requests.auth import HTTPDigestAuth
+from requests.auth import HTTPBasicAuth
 
 # initialize logging
 logging.config.fileConfig('conf/logging.ini')
@@ -41,6 +42,7 @@ growatt_password = str(config['growatt']['password'])
 growatt_login_tries = int(config['growatt']['login_tries'])
 growatt_login_retry_wait_seconds = int(config['growatt']['login_retry_wait_seconds'])
 shelly_baseurl = str(config['shelly']['baseurl'])
+shelly_auth_type = str(config['shelly']['auth_type'])
 shelly_username = str(config['shelly']['username'])
 shelly_password = str(config['shelly']['password'])
 shelly_turnon_seconds = int(config['shelly']['turnon_seconds'])
@@ -147,7 +149,13 @@ def get_load_state():
     """
     request_url = shelly_baseurl + '/relay/0'
     try:
-        r = requests.get(request_url, auth=HTTPDigestAuth(shelly_username, shelly_password))
+        if shelly_auth_type == 'basic':
+            r = requests.get(request_url, auth=HTTPBasicAuth(shelly_username, shelly_password))
+        elif shelly_auth_type == 'digest':
+            r = requests.get(request_url, auth=HTTPDigestAuth(shelly_username, shelly_password))
+        else:
+            logger.error('Invalid shelly authentication type set. Please check your configuration!')
+            raise Exception('Invalid shelly authentication type')
         r.raise_for_status()
     except Exception as e:
         logger.error('Getting load status failed!')
@@ -171,7 +179,13 @@ def set_load_state(target_state: bool, timer_sec: int = None):
     else:
         request_url = shelly_baseurl + '/relay/0?turn=off'
     try:
-        r = requests.get(request_url, auth=HTTPDigestAuth(shelly_username, shelly_password))
+        if shelly_auth_type == 'basic':
+            r = requests.get(request_url, auth=HTTPBasicAuth(shelly_username, shelly_password))
+        elif shelly_auth_type == 'digest':
+            r = requests.get(request_url, auth=HTTPDigestAuth(shelly_username, shelly_password))
+        else:
+            logger.error('Invalid shelly authentication type set. Please check your configuration!')
+            raise Exception('Invalid shelly authentication type')
         r.raise_for_status()
     except Exception as e:
         logger.error('Setting load status failed!')

@@ -8,6 +8,8 @@ login_retry_wait_seconds = 10
 
 [shelly]
 baseurl = http://192.168.x.x
+;'basic for Gen 1 or 'digest' for Gen 2+ Shelly devices
+auth_type = digest
 username = admin
 password = secret123$
 turnon_seconds = 1800

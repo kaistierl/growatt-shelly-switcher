@@ -11,6 +11,8 @@ growatt_login_tries: 3
 growatt_login_retry_wait_seconds: 10
 
 shelly_baseurl: "http://192.168.x.x"
+shelly_auth_type: "digest"
+#shelly_auth_type: "basic"
 shelly_username: "admin"
 shelly_password: "secret123$"
 shelly_turnon_seconds: 1800 # 30m

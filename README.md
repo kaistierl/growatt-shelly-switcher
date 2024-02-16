@@ -4,7 +4,7 @@
 
 - Inverter: Growatt SPH 8000TL3 BH-UP connected to Server via Growatt ShineWifi-X
 - Shelly relay or plug to switch the load, HTTP API enabled
-  - Code is built for Gen2+ devices which use HTTP digest auth, if Gen1 device is used, it must be changed to HTTP basic auth
+  - For Gen1 devices basic auth is supported, for Gen2+ devices digest auth must be used. This can be changed in the configuration
 - Load: Generic heating element, connected to shelly via external load contactor
 - Raspberry Pi Zero W to run the software on
  
@@ -33,6 +33,8 @@ login_retry_wait_seconds = 10
 
 [shelly]
 baseurl = http://192.168.x.x
+;'basic for Gen 1 or 'digest' for Gen 2+ Shelly devices
+auth_type = digest
 username = admin
 password = secret123$
 turnon_seconds = 1800
