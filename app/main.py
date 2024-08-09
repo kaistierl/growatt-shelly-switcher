@@ -41,6 +41,7 @@ growatt_username = str(config['growatt']['username'])
 growatt_password = str(config['growatt']['password'])
 growatt_login_tries = int(config['growatt']['login_tries'])
 growatt_login_retry_wait_seconds = int(config['growatt']['login_retry_wait_seconds'])
+growatt_inverter_sn = str(config['growatt']['inverter_sn'])
 shelly_baseurl = str(config['shelly']['baseurl'])
 shelly_auth_type = str(config['shelly']['auth_type'])
 shelly_username = str(config['shelly']['username'])
@@ -103,7 +104,8 @@ def update_state(growattApi: growattServer.GrowattApi, growatt_userid: str):
     growatt_plant_list = growattApi.plant_list(growatt_userid)
     growatt_plant_id = growatt_plant_list['data'][0]['plantId']
     growatt_plant_name = growatt_plant_list['data'][0]['plantName']
-    growatt_inverter_id = growattApi.device_list(growatt_plant_id)[0]['deviceSn']
+    #growatt_inverter_id = growattApi.device_list(growatt_plant_id)[0]['deviceSn']
+    growatt_inverter_id = growatt_inverter_sn
     logger.debug('Using plant \'%s\' with ID \'%s\' and inverter with ID \'%s\'',
                  growatt_plant_name, growatt_plant_id, growatt_inverter_id)
 
