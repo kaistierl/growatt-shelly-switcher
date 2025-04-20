@@ -111,13 +111,17 @@ def update_state(growattApi: growattServer.GrowattApi, growatt_userid: str):
 
     # get battery status
     inverter_system_status = growattApi.mix_system_status(growatt_inverter_id, growatt_plant_id)
-    logger.debug('Current inverter status: %s', str(inverter_system_status))
+    logger.debug('Current inverter status json: %s', str(inverter_system_status))
     battery_capacity_percent = int(inverter_system_status['SOC'])
-    logger.info('Current battery percentage: %s%%', str(battery_capacity_percent))
-
+    local_load_kw = str(inverter_system_status['pLocalLoad'])
+    production_kw = str(inverter_system_status['ppv'])
+    logger.info('Current solar status: Battery %s%%; Production %skW; Consumption %skW',
+                str(battery_capacity_percent), str(production_kw), str(local_load_kw))
     # print load status to debug log
     load_status = get_load_state()
-    logger.debug('Current load status: %s', str(load_status))
+    logger.debug('Current load status json: %s', str(load_status))
+    load_switch_state = 'On' if load_status['ison'] else 'Off'
+    logger.info('Current load status: %s', str(load_switch_state))
 
     # check battery status and set appropriate target state of the load
     load_ison = bool(load_status['ison'])
@@ -139,7 +143,9 @@ def update_state(growattApi: growattServer.GrowattApi, growatt_userid: str):
 
     # print load status to debug log
     load_status = get_load_state()
-    logger.debug('Current load status: %s', str(load_status))
+    logger.debug('Current load status json: %s', str(load_status))
+    load_switch_state = 'On' if load_status['ison'] else 'Off'
+    logger.info('Current load status: %s', str(load_switch_state))
 
 
 def get_load_state():
