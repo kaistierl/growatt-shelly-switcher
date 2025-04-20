@@ -120,7 +120,7 @@ def update_state(growattApi: growattServer.GrowattApi, growatt_userid: str):
     # print load status to debug log
     load_status = get_load_state()
     logger.debug('Current load status json: %s', str(load_status))
-    load_switch_state = 'On' if load_status['ison'] else 'Off'
+    load_switch_state = 'ON' if load_status['ison'] else 'OFF'
     logger.info('Current load status: %s', str(load_switch_state))
 
     # check battery status and set appropriate target state of the load
@@ -144,8 +144,6 @@ def update_state(growattApi: growattServer.GrowattApi, growatt_userid: str):
     # print load status to debug log
     load_status = get_load_state()
     logger.debug('Current load status json: %s', str(load_status))
-    load_switch_state = 'On' if load_status['ison'] else 'Off'
-    logger.info('Current load status: %s', str(load_switch_state))
 
 
 def get_load_state():
