@@ -6,6 +6,16 @@ The **Solar Heating Controller** is a lightweight Python-based automation tool t
 
 This is especially useful for setups where you'd like to run a load (like a heater or appliance) **only when sufficient solar energy is available** — without manual monitoring.
 
+## ⚠️ Safety Notice & Disclaimer
+
+### Electrical Safety Warning:
+This project involves switching mains voltage electrical loads, which can pose serious risk of electric shock, fire, or equipment damage if not handled properly.
+All installation, wiring, and modification of electrical systems must be performed by a qualified electrician in accordance with your local electrical code.
+
+- The author assumes no responsibility or liability for any damage, injury, or loss caused by the use of this software or associated hardware setups.
+
+- Always use an external contactor rated for your specific load when switching high-power devices like electric heaters. The built-in relay of a Shelly device may not be suitable for continuous high current switching on its own.
+
 ## 🧰 Hardware Requirements
 
 - **Inverter:** Growatt SPH 8000TL3 BH-UP (via ShineWifi-X)  
@@ -123,3 +133,9 @@ Once deployed, the application log can be monitored with:
 ```bash
 journalctl -u growatt-app -f
 ```
+
+## 📝 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+Feel free to use, modify, and distribute it for personal or commercial purposes. No warranty is provided.
