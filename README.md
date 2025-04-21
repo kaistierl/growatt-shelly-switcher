@@ -2,15 +2,14 @@
 
 ## 🔌 Overview
 
-**Solar Heating Controller** is a lightweight Python-based automation tool that intelligently controls a heating load (or any electrical device) based on the battery charge level of a **Growatt solar power system**. It uses a **Shelly smart relay** to switch the load and ensures safe, efficient usage of excess solar energy.
+The **Solar Heating Controller** is a lightweight Python-based automation tool that intelligently controls a heating load (or any electrical device) based on the battery charge level of a **Growatt solar power system**. It uses a **Shelly smart relay** to switch the load and ensures safe, efficient usage of excess solar energy.
 
 This is especially useful for setups where you'd like to run a load (like a heater or appliance) **only when sufficient solar energy is available** — without manual monitoring.
 
----
-
 ## 🧰 Hardware Requirements
 
-- **Inverter:** Growatt SPH 8000TL3 BH-UP (connected via Growatt ShineWifi-X). Other Growatt inverters might work as well but I did not test this.
+- **Inverter:** Growatt SPH 8000TL3 BH-UP (via ShineWifi-X)  
+  _(Other Growatt models may work but are untested)_
 - **Shelly relay or plug** to switch the load  
   - For Gen1 devices: Basic authentication  
   - For Gen2+ devices: Digest authentication  
@@ -18,19 +17,17 @@ This is especially useful for setups where you'd like to run a load (like a heat
 - **Load:** Generic heating element (connected through an external load contactor)
 - **Controller:** Raspberry Pi Zero W (or similar) to run the software
 
----
-
 ## 🧠 Features
 
-- Retrieves the **battery charge level** from the Growatt cloud API
-- Switches a **Shelly smart relay** ON/OFF via its HTTP API
-- Turns **ON** the load when battery percentage is **equal to or above** a configurable threshold
-- Turns **OFF** the load when the battery drops **below or equal** to a separate threshold
+- Retrieves the **battery state of charge** from the Growatt cloud API
+- Switches a **Shelly smart relay** using HTTP API commands
+  - Turns **ON** the load when battery percentage is **equal to or above** a configurable threshold
+  - Turns **OFF** the load when the battery drops **below or equal** to a separate threshold
 - Includes **night-time mode** to automatically disable the load during certain hours
 - Implements a **fail-safe mechanism**:  
   - A one-shot timer is sent to the Shelly device. This ensures the load turns off automatically in case of system crash or network issues
-
----
+- Has a configurable retry logic for Growatt server connection issues
+- Supports full **systemd service** deployment with Ansible
 
 ## ⚙️ Configuration
 
@@ -69,7 +66,7 @@ night_end_hour = 5
 night_end_minute = 00
 ```
 
-## 📦 Installation
+## 📦 Manual Installation
 
 Requires Python 3.7 or newer. Install dependencies with:
 
@@ -80,5 +77,49 @@ pip install -r requirements.txt
 Run the script with:
 
 ```bash
-python main.py
+python3 main.py
+```
+
+Or using the included `run.sh` script:
+
+```bash
+./run.sh
+```
+
+Logs will be printed to stdout and saved as `out.log`.
+
+## 🧪 Ansible Deployment
+
+Ansible scripts are available to fully automate installation and provisioning.
+
+### Example Playbook Usage:
+
+```bash
+cd ansible
+ansible-playbook -i inventory main.yml
+```
+
+Customize variables by editing `ansible/vars.yml` (see `vars.yml.example`).
+
+This will:
+
+- Configure hostname and timezone
+- Configure SSH (disabling password authentication)
+- Remove the default "pi" user
+- Install Tailscale for remote access
+- Install system dependencies and Python packages
+- Deploy the app to /opt/app
+- Configure systemd to run the app as a service
+- Enable and start the service
+
+After executing the playbook for the first time, connect the device to tailscale:
+
+```bash
+tailscale up
+```
+
+Once deployed, the application log can be monitored with:
+
+```bash
+journalctl -u growatt-app -f
 ```
