@@ -1,6 +1,7 @@
 [growatt]
-server_url = https://server.growatt.com/
-;server_url = https://openapi.growatt.com/
+server_url = https://openapi.growatt.com/
+; Alternative API endpoint
+;server_url = https://server.growatt.com/
 username = user
 password = secret123$
 inverter_sn = TPXXXXXXXX
@@ -9,7 +10,7 @@ login_retry_wait_seconds = 10
 
 [shelly]
 baseurl = http://192.168.x.x
-;'basic for Gen 1 or 'digest' for Gen 2+ Shelly devices
+; 'basic' for Gen1 or 'digest' for Gen2+ Shelly devices
 auth_type = digest
 username = admin
 password = secret123$
@@ -17,8 +18,8 @@ turnon_seconds = 1800
 
 [main]
 check_interval_seconds = 300
-battery_threshold_on_percent = 75
-battery_threshold_off_percent = 25
+battery_threshold_on_percent = 90
+battery_threshold_off_percent = 60
 night_start_hour = 22
 night_start_minute = 00
 night_end_hour = 5
