@@ -228,7 +228,10 @@ def main():
                            datetime.time(night_end_hour, night_end_minute)):
             logger.info('Nighttime mode is enabled between %02d:%02d and %02d:%02d - ensuring the load is OFF',
                         night_start_hour, night_start_minute, night_end_hour, night_end_minute)
-            set_load_state(False)
+            try:
+                set_load_state(False)
+            except Exception as e:
+                logger.exception('Update job failed, caught exception: %s', e)
         else:
             logger.info('Starting update job')
             try:
