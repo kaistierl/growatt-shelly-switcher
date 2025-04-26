@@ -224,6 +224,7 @@ def main():
     growatt_userid = growatt_login(growattApi)
     # run periodic update job
     while True:
+        logger.info('Starting update job')
         if is_time_between(datetime.time(night_start_hour, night_start_minute),
                            datetime.time(night_end_hour, night_end_minute)):
             logger.info('Nighttime mode is enabled between %02d:%02d and %02d:%02d - ensuring the load is OFF',
@@ -233,7 +234,6 @@ def main():
             except Exception as e:
                 logger.exception('Update job failed, caught exception: %s', e)
         else:
-            logger.info('Starting update job')
             try:
                 update_state(growattApi, growatt_userid)
                 logger.info('Update job finished successfully')
