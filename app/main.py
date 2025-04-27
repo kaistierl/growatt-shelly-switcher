@@ -232,7 +232,8 @@ def main():
             try:
                 set_load_state(False)
             except Exception as e:
-                logger.exception('Update job failed, caught exception: %s', e)
+                logger.error('Update job failed, caught exception: %s', e,
+                             exc_info=logger.isEnabledFor(logging.DEBUG))
         else:
             try:
                 update_state(growattApi, growatt_userid)
@@ -244,9 +245,11 @@ def main():
                     update_state(growattApi, growatt_userid)
                     logger.info('Update job finished successfully')
                 except Exception as e:
-                    logger.exception('Renewing expired session failed, caught exception: %s', e)
+                    logger.error('Renewing expired session failed, caught exception: %s', e,
+                                 exc_info=logger.isEnabledFor(logging.DEBUG))
             except Exception as e:
-                logger.exception('Update job failed, caught exception: %s', e)
+                logger.error('Update job failed, caught exception: %s', e,
+                             exc_info=logger.isEnabledFor(logging.DEBUG))
         sleep_time = check_interval_seconds - ((time.monotonic() - starttime) % check_interval_seconds)
         logger.info('Sleeping for %.2f seconds...', sleep_time)
         time.sleep(sleep_time)
